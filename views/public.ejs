@@ -1,0 +1,176 @@
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="../font/bootstrap-icons.css" type="text/css">
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../jquery.min.js"></script>
+
+    <script>
+       
+        let contenido=false;
+
+        function filtrado() { //cambiar
+            console.log("filtrando")
+
+            if(!contenido){
+                return
+            }
+
+            if(!$("#filtro").val()){
+
+                console.log("Filtro text vacio") // si input vacio muesto todos los archivos
+                window.location.replace("/public")
+                
+                return
+            }
+
+            window.location.replace("/public?filtro="+$("#filtro").val()+"&page=1")
+            
+
+        }
+
+        function oscuro() {
+            // ultimo porcentaje cambiar
+           if($('#defaultRange').val()<50){
+            $('#contenido').attr('style','background-color: hsl(0, 0%, '+(100-$('#defaultRange').val())+'%);color: hsl(0, 0%, 0%);')
+           }
+           else{
+            $('#contenido').attr('style','background-color: hsl(0, 0%, '+(100-$('#defaultRange').val())+'%);color: hsl(0, 0%, 100%);')
+           }
+        }
+
+    </script>
+</head>
+
+<body >
+
+    <div class="row justify-content-center mx-auto mt-4" >
+
+        <div class="rounded text-center p-5  col-4 border border-5" id="contenido" style="background-color: lightcyan;">
+            <!-- <h1><%= user.email %></h1> -->
+            <h1 data-bs-toggle="collapse" data-bs-target="#colapso"><i class="bi bi-eye"></i> Public files <i class="bi bi-eye"></i></h1>
+            <div id="colapso" class="collapse">
+                Lista de todos los archivos publicos de los usuarios registrados en esta página.
+                Los archivos se pueden descargar con total libertad.
+            </div>
+            <br>
+            <a href="/">
+                <button type="button" class="btn btn-info"  ><i class="bi bi-house"></i> Volver a home</button>
+            </a>
+            <br><br>
+            <h2>TOP 3 CONTRIBUIDORES</h2>
+            <div id="demo" class="carousel slide" data-bs-ride="carousel">
+
+                
+
+                <div class="carousel-inner">
+                <% for(var contador=0;contador<user.top3.length;contador++) { %>
+                    <script>
+                        var barraUsuario='<%=user.top3[contador].cantidad%>'*100/'<%=user.maxPublic%>';
+                        var barraRestante=100-barraUsuario;
+                    </script>
+                    <% if(contador==0){ %>
+                        <div class="carousel-item active">
+                            <strong><%=user.top3[contador].username%> <span class="badge bg-secondary"> MVP</span></strong><br>
+                            Cantidad de archivos publicos subidos: <strong><%=user.top3[contador].cantidad%></strong><br>
+                            <strong>Porcentaje de archivos publicos de <%=user.top3[contador].username%></strong>
+                            <div class="progress">
+                                <div class="progress-bar bg-success progress-bar-striped " id='<%=user.top3[contador].username%>' style="width:100%"><%=user.top3[contador].username%></div>
+                                <div class="progress-bar bg-info progress-bar-striped " id='<%=user.top3[contador].username%>2' style="width:100%">Otros usuarios</div>
+                            </div>
+                            
+                        </div>
+                    <% } %>
+                    <% if(contador!=0){ %>   
+                    
+                    <div class="carousel-item ">
+                        <strong><%=user.top3[contador].username%></strong><br>
+                        Cantidad de archivos publicos subidos: <strong><%=user.top3[contador].cantidad%></strong><br>
+                        <strong>Porcentaje de archivos publicos de <%=user.top3[contador].username%></strong>
+                        <div class="progress">
+                            <div class="progress-bar bg-success progress-bar-striped " id='<%=user.top3[contador].username%>' style="width:100%"><%=user.top3[contador].username%></div>
+                            <div class="progress-bar bg-info progress-bar-striped " id='<%=user.top3[contador].username%>2' style="width:100%">Otros usuarios</div>
+                        </div>
+
+                    </div>
+                    
+                    <% } %>
+                    <script>$('#<%=user.top3[contador].username%>').attr("style", 'width:'+barraUsuario+'%;height:100%')</script>
+                    <script>$('#<%=user.top3[contador].username%>2').attr("style", 'width:'+barraRestante+'%;height:100%')</script>
+                <% } %>
+                </div>
+                <!-- Left and right controls/icons -->
+                <button  type="button" class="btn btn-secondary" data-bs-target="#demo" data-bs-slide="prev">
+                    Anterior
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-target="#demo" data-bs-slide="next">
+                    Siguiente
+                </button>
+            </div>
+            <br><br>
+            <input placeholder="Filtrar por nombre" onchange="filtrado()" class="col-4" type="text" id="filtro" name="filtro">
+            <br><br>
+            <div id="archivos">
+                
+                <% for(var contador=0;contador<user.files.length;contador++) { %>
+                    
+                    <script>contenido=true
+                    $('#filtro').attr("value", '<%=user.filter%>')
+                    </script>  
+
+                    <a href="./api/download?user=<%=user.files[contador].owner%>&file=<%=user.files[contador].filename%>" download>
+                        <%=user.files[contador].clientName%>
+                    </a>
+                    
+                    <br>
+                    <% if(user.files[contador].description!=undefined && user.files[contador].description!=0){ %>
+                        <strong>Descripcion:</strong>
+                        <%=user.files[contador].description%>
+                        <br>
+                    <%}%>
+                    <strong>Propietario:</strong>
+                    <%=user.files[contador].owner%>
+                    
+                    <br><br>
+                    
+
+                <% } %>
+                
+                <br>
+
+                <!-- PAGINACION -->
+                
+
+            </div>
+            <div class="pagination justify-content-center" id="pagination">
+                <%if(user.maxPage!==null && user.maxPage>1){%>
+                    <%if((user.pagina-2)>1) {%>
+                        <li class="page-item "><a class="page-link" href="/public?filtro=<%=user.filter%>&page=1"> <<< </a></li>
+                    <%}%>
+                    <%let cont=1 %>
+                    <%if((user.pagina-2)>0) {%>
+                        <% cont=user.pagina-2 %>
+                    <%}%>
+                    <%for( i=0; user.maxPage>=cont && (parseInt(user.pagina, 10)+2)>=cont ;cont=cont+1){%>
+                        
+                        <%if(cont==user.pagina){%>
+                            <li class="page-item active"><a class="page-link" ><%=cont%></a></li>
+                        <%} else{%>
+                            <li class="page-item"><a class="page-link" href="/public?filtro=<%=user.filter%>&page=<%=cont%>"><%=cont%></a></li>
+                        <%}%>
+                        
+                    <%}%>
+                    <%if((parseInt(user.pagina, 10)+2)<user.maxPage) {%>
+                        <li class="page-item"><a class="page-link" href="/public?filtro=<%=user.filter%>&page=<%=user.maxPage%>"> >>> </a></li>
+                    <%}%>
+                <%}%>
+            </div>
+            <br>
+            <strong>Oscurecer:</strong>
+            <input type="range" id="defaultRange" name="points2" value="0" onchange=oscuro()>
+        </div>
+        
+    </div>
+
+</body>

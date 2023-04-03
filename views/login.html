@@ -1,0 +1,83 @@
+<head>
+    <link rel="stylesheet" href="../css/bootstrap.min.css" type="text/css">
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="row justify-content-center mx-auto mt-4">
+
+        <div class="rounded text-center p-5 bg-light col-4 border border-5">
+            <form id="formulario" >
+                <h1 class="text-center">LOGIN</h1><br>
+                <p>
+                    <input placeholder="email" class="col-4" type="text" id="email" name="email" required>
+                </p>
+                <p>
+                    <input placeholder="Password" class="col-4" type="password" id="password" name="password" required>
+                </p>
+                <button type="button" class="btn btn-primary" id="submit" name="submit"  >Enviar la informacion</button>
+            </form>
+            <div id="spin"></div>
+            
+        </div>
+        <div id="errores">
+            <button type="button" class="btn-close" id="btnError" data-bs-dismiss="alert" aria-label="Close" hidden></button>
+        </div>
+    </div>
+
+</body>
+
+<script>
+    
+    // una promesa para recibir si el login va bien
+    $('#submit').click(async ()=>{
+        let email = $('#email').val()
+        let pwd = $('#password').val()
+        console.log(email)
+        console.log(pwd)
+        if (!email || !pwd) {
+
+                $('#errores').html ( 
+                    '<div class="alert alert-warning alert-dismissible col-4 mx-auto" role="alert"><div>Rellene todos los campos por favor</div><button type="button" class="btn-close" id="btnError" data-bs-dismiss="alert" aria-label="Close"></button></div>'
+                );
+                //.join('')
+                return
+                    }
+        spinner()
+
+        console.log('Logueando desde html');
+
+        const data = new URLSearchParams()
+        for (const i of new FormData(document.getElementById("formulario"))) {
+            data.append(i[0], i[1]); //recojo llave y valor de todo lo del formulario
+        }
+
+        const res = await fetch('./api/login', {
+            method: 'post',
+            body: data
+        })
+
+        if (res.status !== 204) {
+            $('#spin').html("") //borro todo lo relacionado con el spiner
+            $('#errores').html(
+                    '<div class="alert alert-warning alert-dismissible col-4 mx-auto" role="alert"> <div>Credenciales incorrectas</div> <button type="button" class="btn-close" id="btnError" data-bs-dismiss="alert" aria-label="Close"></button> </div>');
+                // ].join('')
+            
+            return //rompo ejecucion
+        }
+
+        window.location.replace("/");//voy a user si el login va bien
+
+    })
+
+    const spinner = () => {
+        $('#spin').html(  
+            '<div class="d-flex justify-content-center"> <div class="spinner-border" role = "status"></div> </div>'
+        )
+        //.join('')
+    }
+
+    
+
+</script>

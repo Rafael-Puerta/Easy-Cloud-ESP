@@ -1,0 +1,335 @@
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="../font/bootstrap-icons.css" type="text/css">
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../jquery.min.js"></script>
+
+    <script>
+
+        async function subir() {
+            console.log("subiendo")
+            console.log($("#privado").prop("checked")) //true o false checkbox
+            if(!$("#descripcion").val()){
+                console.log("vacio")
+            }
+
+            if(!$("#nombre").val() || !$("#archivo").val()){
+                $('#errores').html(
+                        '<div class="alert alert-warning alert-dismissible col-4 mx-auto" role="alert"> <div>Rellene todos los campos</div> <button type="button" class="btn-close" id="btnError" data-bs-dismiss="alert" aria-label="Close"></button> </div>');
+                
+                return
+            }
+
+            const form = new FormData()
+            form.append('nombre', $("#nombre").val())
+            form.append('descripcion', $("#descripcion").val())
+            form.append('private', $("#privado").prop("checked")) //devuelve true o false
+            form.append('archivo', $("#archivo").prop("files")[0]) // saco el archivo
+            
+            console.log(form)
+
+            const res = await fetch('./api/upload', {
+                method: 'post',
+                body: form ,
+                formData : form
+            }) 
+
+            if (res.status !== 204) {
+                $('#errores').html(
+                        '<div class="alert alert-warning alert-dismissible col-4 mx-auto" role="alert"> <div>Archivo ya existe</div> <button type="button" class="btn-close" id="btnError" data-bs-dismiss="alert" aria-label="Close"></button> </div>');
+                
+                
+                return //rompo ejecucion
+            }
+
+            $('#errores').html(
+                        '<div class="alert alert-warning alert-dismissible col-4 mx-auto" role="alert"> <div>Archivo subido, redireccionando</div> <button type="button" class="btn-close" id="btnError" data-bs-dismiss="alert" aria-label="Close"></button> </div>');
+
+            $("#subida").attr('disabled', true)
+            $('#dell').attr('disabled', true)
+            $('#editt').attr('disabled', true)
+            $('#subidaSpan').removeClass()
+            $('#subidaSpan').addClass("spinner-border spinner-border-sm")
+
+            setTimeout(function() {
+                window.location.replace("/")
+            }, 1000);
+        }
+
+        
+        let contenido=false;
+
+        function filtrado() { //cambiar
+            console.log("filtrando")
+
+            if(!contenido){
+                return
+            }
+
+            if(!$("#filtro").val()){
+
+                console.log("Filtro text vacio") // si input vacio muesto todos los archivos
+                window.location.replace("/")
+                
+                return
+            }
+
+            window.location.replace("/?filtro="+$("#filtro").val()+"&page=1")
+            
+
+        }
+
+        let elegido=""; //recojo filename al abrir pop up
+        function defineArchivo(archivo) {
+            elegido=archivo;
+            console.log(elegido)
+        }
+
+        async function borrar(){
+            // /api/delete
+            const dataDelet = new URLSearchParams();
+            dataDelet.append("filename",elegido)
+
+            const respuesta = await fetch('./api/delete', {
+                method: 'post',
+                body: dataDelet
+            }) 
+
+            if (respuesta.status!== 201) {
+                $('#errEdit').html(
+                        '<div class="alert alert-warning alert-dismissible col-4 mx-auto" role="alert"> <div>Archivo no se ha borrado, error</div> <button type="button" class="btn-close" id="btnError" data-bs-dismiss="alert" aria-label="Close"></button> </div>');
+                return    
+            }
+
+            $('#errEdit').html(
+                        '<div class="alert alert-warning alert-dismissible col-4 mx-auto" role="alert"> <div>Archivo se esta borrando</div> <button type="button" class="btn-close" id="btnError" data-bs-dismiss="alert" aria-label="Close"></button> </div>');
+            
+            $('#dell').attr('disabled', true)
+            $('#editt').attr('disabled', true)
+            $('#dellSpan').removeClass()
+            $('#dellSpan').addClass("spinner-border spinner-border-sm")
+
+            setTimeout(function() {
+                window.location.replace("/")
+            }, 2000);
+
+        }
+
+
+        async function editar(){
+            // api/update
+
+            const formu = new URLSearchParams();
+            formu.append('nombre', $("#nombreEdit").val())
+            formu.append('descripcion', $("#descripcionEdit").val())
+            formu.append('private', $("#privadoEdit").prop("checked")) //devuelve true o false
+            formu.append('filename', elegido)
+            
+            console.log(formu)
+
+            const response = await fetch('./api/update', {
+                method: 'post',
+                body: formu 
+            }) 
+
+            if (response.status!== 201) {
+                $('#errEdit').html(
+                        '<div class="alert alert-warning alert-dismissible col-4 mx-auto" role="alert"> <div>Archivo no se ha editado, error</div> <button type="button" class="btn-close" id="btnError" data-bs-dismiss="alert" aria-label="Close"></button> </div>');
+                return    
+            }
+
+            $('#errEdit').html(
+                        '<div class="alert alert-warning alert-dismissible col-4 mx-auto" role="alert"> <div>Archivo se esta editando </div> <button type="button" class="btn-close" id="btnError" data-bs-dismiss="alert" aria-label="Close"></button> </div>');
+              
+            $('#editt').attr('disabled', true)
+            $('#dell').attr('disabled', true)
+            $('#edittSpan').removeClass()
+            $('#edittSpan').addClass("spinner-border spinner-border-sm")
+            
+
+            setTimeout(function() {
+                window.location.replace("/")
+            }, 2000);
+
+        }
+        
+        
+
+    </script>
+</head>
+
+
+
+<body >
+
+    <div class="row justify-content-center mx-auto mt-4">
+
+        <div class="rounded text-center p-5 bg-light col-4 border border-5">
+            <h1><i class="bi bi-person-circle"></i> <%= user.email %></h1>
+            <br>
+            <a href="/public">
+                <button type="button" class="btn btn-info"  ><i class="bi bi-eye"></i> Revisar archivos publicos</button>
+            </a>
+            <br>
+            <br>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" ><i class="bi bi-upload"></i> Subir archivo</button>
+            <br><br>
+            <input placeholder="Filtrar por nombre" onchange="filtrado()" class="col-4" type="text" id="filtro" name="filtro">
+            <br><br>
+            <div id="archivos">
+                
+                <% for(var contador=0;contador<user.files.length;contador++) { %>
+                    
+                    <script>contenido=true
+                    $('#filtro').attr("value", '<%=user.filter%>')
+                    </script>  
+
+                    <a href="./api/download?user=<%= user.email %>&file=<%=user.files[contador].filename%>" download>
+                        <%=user.files[contador].clientName%>
+                    </a>
+                    
+                    <br>
+                    <% if(user.files[contador].description!=undefined && user.files[contador].description!=0){ %>
+                        <strong>Descripcion:</strong>
+                        <%=user.files[contador].description%>
+                        <br>
+                    <%}%>
+                    <strong>Visibilidad:</strong>
+                    <% if(user.files[contador].isPrivate==true){ %>
+                        <i class="bi bi-eye-slash-fill"></i>
+                    <%}%>
+                    <%if(user.files[contador].isPrivate==false){%>
+                        <i class="bi bi-eye-fill"></i>
+                    <%}%>
+                    
+                    <br>
+                    <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#edit" onclick="defineArchivo('<%=user.files[contador].filename%>')" ><i class="bi bi-pencil-square"></i> Editar</button>
+                    <br><br>
+                    
+
+                <% } %>
+                
+                <br>
+
+                <!-- PAGINACION -->
+                
+
+            </div>
+            <div class="pagination justify-content-center" id="pagination">
+                <%if(user.maxPage!==null && user.maxPage>1){%>
+                    <%if((user.pagina-2)>1) {%>
+                        <li class="page-item"><a class="page-link" href="/?filtro=<%=user.filter%>&page=1"> <<< </a></li>
+                    <%}%>
+                    <%let cont=1 %>
+                    <%if((user.pagina-2)>0) {%>
+                        <% cont=user.pagina-2 %>
+                    <%}%>
+                    <%for( i=0; user.maxPage>=cont && (parseInt(user.pagina, 10)+2)>=cont ;cont=cont+1){%>
+                        
+                        <%if(cont==user.pagina){%>
+                            <li class="page-item active"><a class="page-link" ><%=cont%></a></li>
+                        <%} else{%>
+                            <li class="page-item"><a class="page-link" href="/?filtro=<%=user.filter%>&page=<%=cont%>"><%=cont%></a></li>
+                        <%}%>
+                        
+                    <%}%>
+                    <%if((parseInt(user.pagina, 10)+2)<user.maxPage) {%>
+                        <li class="page-item"><a class="page-link" href="/?filtro=<%=user.filter%>&page=<%=user.maxPage%>"> >>> </a></li>
+                    <%}%>
+                <%}%>
+            </div>
+        </div>
+    </div>
+  
+  <!-- Por up upload file -->
+  <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog"> <!-- TIPO DE MODAL -->
+      <div class="modal-content">
+        <div class="modal-header"> <!-- HEAD DEL MODAL -->
+          <h5 class="modal-title" id="exampleModalLabel">Subir archivo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body"> <!-- BODY DEL MODAL -->
+
+            <div class="row justify-content-center">
+
+                <div class="text-center">
+                    <form id="formulario"  >
+                        <p>
+                            <input placeholder="Nombre" type="text" id="nombre" name="nombre" required>
+                        </p>
+                        <p>
+                            <input placeholder="Descripcion (opcional)" type="text" id="descripcion" name="descripcion" >
+                        </p>
+                        <p>
+                            Hacer privado
+                            <input  type="checkbox" id="privado" name="privado">
+                        </p>
+                        <p>
+                            <input placeholder="Seleccionar archivo" type="file" id="archivo" name="archivo" required>
+                        </p>
+                        
+                        <div id="errores"></div>
+                    </form>
+                    
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="modal-footer"> <!-- FOOTER DEL MODAL -->
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary id="subida" onclick="subir()"><span id="subidaSpan" class="bi bi-upload"></span> Subir archivo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de editar -->
+  <div class="modal fade" id="edit" tabindex="-1" aria-labelledby="editm" aria-hidden="true">
+    <div class="modal-dialog"> <!-- TIPO DE MODAL -->
+      <div class="modal-content">
+        <div class="modal-header"> <!-- HEAD DEL MODAL -->
+          <h5 class="modal-title" id="editm">Editar archivo </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body"> <!-- BODY DEL MODAL -->
+
+            <div class="row justify-content-center">
+
+                <div class="text-center">
+                    <form id="formulario"  >
+                        <p>
+                            <input placeholder="Nombre" type="text" id="nombreEdit" name="nombre" >
+                        </p>
+                        <p>
+                            <input placeholder="Descripcion" type="text" id="descripcionEdit" name="descripcion" >
+                        </p>
+                        <p>
+                            Hacer privado
+                            <input  type="checkbox" id="privadoEdit" name="privado">
+                        </p>
+                        
+                    </form>
+                    <div id="errEdit"></div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="modal-footer"> <!-- FOOTER DEL MODAL -->
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" id="dell" class="btn btn-primary" onclick="borrar()"><span id="dellSpan" class="bi bi-trash"></span> Eliminar archivo</button>
+          <button type="button" id="editt" class="btn btn-primary" onclick="editar()"><span id="edittSpan" class="bi bi-hdd"></span> Aplicar cambios</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
